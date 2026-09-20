@@ -190,7 +190,6 @@ class FoursquareApi(
                 throw FoursquareApiException.RateLimited(reset)
             }
             429 -> throw FoursquareApiException.QuotaExhausted()
-            in 500..599 -> throw FoursquareApiException.ServerError(response.code, response.message)
             else -> throw FoursquareApiException.ServerError(response.code, response.message)
         }
     }

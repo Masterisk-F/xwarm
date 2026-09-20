@@ -1,10 +1,6 @@
 package com.masterisk_f.xwarm.tweet
 
-data class TweetLocation(
-    val city: String? = null,
-    val state: String? = null,
-    val formattedAddress: List<String>? = null,
-)
+import com.masterisk_f.xwarm.data.Spot
 
 private val POSTAL_CODE_REGEX = Regex("""^\d{3}-\d{4}$""")
 
@@ -14,17 +10,17 @@ object TweetTextFormatter {
 
     fun format(
         venueName: String,
-        location: TweetLocation?,
+        spot: Spot?,
         shareUrl: String,
     ): String {
-        val locText = location?.let { getVenueLocationText(it) } ?: ""
+        val locText = spot?.let { getVenueLocationText(it) } ?: ""
         return "I'm at $venueName$locText\n$shareUrl"
     }
 
-    private fun getVenueLocationText(location: TweetLocation): String {
-        val city = location.city?.takeIf { it.isNotBlank() }
-        val state = location.state?.takeIf { it.isNotBlank() }
-        val formattedAddress = location.formattedAddress?.filter { it.isNotBlank() }
+    private fun getVenueLocationText(spot: Spot): String {
+        val city = spot.city?.takeIf { it.isNotBlank() }
+        val state = spot.state?.takeIf { it.isNotBlank() }
+        val formattedAddress = spot.formattedAddress?.filter { it.isNotBlank() }
 
         if (city != null && state != null) {
             return " in $city, $state"

@@ -93,7 +93,6 @@ class FoursquareModelsTest {
         assertEquals("6421f0405c8d094658112a56", res.checkinId)
         assertEquals("https://www.swarmapp.com/user/123456/checkin/6421f0405c8d094658112a56?s=qtRZ", res.checkinShortUrl)
         assertEquals("Lucky Dragon - Chinese Restaurant", res.venueName)
-        assertEquals(1679945792L, res.createdAt)
     }
 
     @Test

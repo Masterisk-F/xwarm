@@ -60,7 +60,10 @@ object FoursquareJsonParser {
      */
     fun parseCandidates(jsonString: String): List<Spot> {
         val root = JSONObject(jsonString)
-        val array = root.optJSONArray("candidates") ?: root.optJSONArray("results") ?: return emptyList()
+        val array = root.optJSONArray("candidates")
+            ?: root.optJSONArray("results")
+            ?: root.optJSONObject("response")?.optJSONArray("venues")
+            ?: return emptyList()
         val spots = mutableListOf<Spot>()
 
         for (i in 0 until array.length()) {
@@ -73,8 +76,12 @@ object FoursquareJsonParser {
             }
             if (id.isBlank() || name.isBlank()) continue
 
+            val locObj = item.optJSONObject("location")
+
             val distance = if (item.has("distance") && !item.isNull("distance")) {
                 item.optInt("distance")
+            } else if (locObj != null && locObj.has("distance") && !locObj.isNull("distance")) {
+                locObj.optInt("distance")
             } else null
 
             // Category (first one)
@@ -91,7 +98,6 @@ object FoursquareJsonParser {
             var state: String? = null
             var formattedList: List<String>? = null
 
-            val locObj = item.optJSONObject("location")
             if (locObj != null) {
                 address = locObj.optString("address").takeIf { it.isNotBlank() }
                 city = locObj.optString("locality").ifEmpty {

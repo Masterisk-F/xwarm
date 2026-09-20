@@ -37,10 +37,10 @@ class FoursquareApi(
     }
 
     /**
-     * Search nearby venues candidates using the modern Places API geotagging endpoint.
+     * Search nearby venues candidates using Foursquare API.
      *
-     * Auth: Bearer header with the user's OAuth token (D-09, D-11).
-     * Header: X-Places-Api-Version is required.
+     * Tries v2 /venues/search on api.foursquare.com first (same reachable host as checkins and user profile),
+     * and falls back to places-api.foursquare.com/geotagging/candidates if needed.
      */
     suspend fun searchNearby(
         lat: Double,
@@ -49,22 +49,52 @@ class FoursquareApi(
         limit: Int = 20,
     ): Result<List<Spot>> = withContext(Dispatchers.IO) {
         runCatching {
-            val url = "https://$PLACES_API_HOST/geotagging/candidates".toHttpUrlOrNull()
+            // 1. Primary: v2 venues/search on api.foursquare.com
+            val v2Url = "https://$V2_API_HOST/v2/venues/search".toHttpUrlOrNull()
+                ?.newBuilder()
+                ?.addQueryParameter("v", BuildConfig.FSQ_API_VERSION)
+                ?.addQueryParameter("oauth_token", oauthToken)
+                ?.addQueryParameter("ll", formatLatLng(lat, lng))
+                ?.addQueryParameter("limit", limit.coerceIn(1, 50).toString())
+                ?.build()
+                ?: throw IllegalArgumentException("Invalid URL")
+
+            val v2Request = Request.Builder()
+                .url(v2Url)
+                .addHeader("Accept", "application/json")
+                .get()
+                .build()
+
+            val v2Result = runCatching {
+                client.newCall(v2Request).execute().use { response ->
+                    handleCommonErrors(response)
+                    val body = response.body?.string() ?: throw IOException("Empty response body")
+                    val spots = FoursquareJsonParser.parseCandidates(body)
+                    if (spots.isNotEmpty()) spots else null
+                }
+            }
+
+            if (v2Result.isSuccess && v2Result.getOrNull() != null) {
+                return@runCatching v2Result.getOrNull()!!
+            }
+
+            // 2. Fallback: Places API geotagging/candidates
+            val placesUrl = "https://$PLACES_API_HOST/geotagging/candidates".toHttpUrlOrNull()
                 ?.newBuilder()
                 ?.addQueryParameter("ll", formatLatLng(lat, lng))
                 ?.addQueryParameter("limit", limit.coerceIn(1, 50).toString())
                 ?.build()
                 ?: throw IllegalArgumentException("Invalid URL")
 
-            val request = Request.Builder()
-                .url(url)
+            val placesRequest = Request.Builder()
+                .url(placesUrl)
                 .addHeader("Authorization", "Bearer $oauthToken")
                 .addHeader("X-Places-Api-Version", BuildConfig.FSQ_PLACES_API_VERSION)
                 .addHeader("Accept", "application/json")
                 .get()
                 .build()
 
-            client.newCall(request).execute().use { response ->
+            client.newCall(placesRequest).execute().use { response ->
                 handleCommonErrors(response)
                 val body = response.body?.string() ?: throw IOException("Empty response body")
                 FoursquareJsonParser.parseCandidates(body)

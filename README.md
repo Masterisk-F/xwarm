@@ -35,16 +35,9 @@ I'm at [スポット名] in [都市, 州 または 住所]
 
 ---
 
-## コストと API キーについて
+## Foursquare 連携キーの取得
 
-| サービス | 必要なキー | 費用 | 備考 |
-|---|---|---|---|
-| **Foursquare** | `client_id` / `client_secret` (または OAuth Token) | **無料** | クレジットカード登録不要で取得可能 |
-| **X (Twitter)** | **不要 (0個)** | **完全無料** | Web Intent + App Links で公式 X アプリを起動するため、X 側の有料 Developer API アカウントは不要 |
-
----
-
-## Foursquare 連携キーの取得手順 (無料)
+FoursquareのDeveloper Colsoleから`client_id` / `client_secret`を取得してください。
 
 1. [Foursquare Developer Console](https://location.foursquare.com/developer/) にアクセスし、無料アカウントを作成またはログインします。
 2. 利用規約（Places API Pay-As-You-Go Terms of Use）に同意します（クレジットカード登録は不要です）。

@@ -16,6 +16,14 @@ I'm at [スポット名] in [都市, 州 または 住所]
 [Swarm 共有URL]
 ```
 
+## スクリーンショット
+
+<p align="center">
+  <img src="img/screenshot_spots.png" width="320" alt="スポット一覧画面" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="img/screenshot_login.png" width="320" alt="認証・セットアップ画面" />
+</p>
+
 ### 主な特徴
 
 - 🚀 **起動即一覧**: アプリを開くだけで、GPS を用いて周辺のスポット（会場名・現在地からの距離・カテゴリ・住所）を表示
@@ -27,7 +35,7 @@ I'm at [スポット名] in [都市, 州 または 住所]
 
 ---
 
-## コストと API キーについて（できるだけ無料で運用）
+## コストと API キーについて
 
 | サービス | 必要なキー | 費用 | 備考 |
 |---|---|---|---|
@@ -42,7 +50,7 @@ I'm at [スポット名] in [都市, 州 または 住所]
 2. 利用規約（Places API Pay-As-You-Go Terms of Use）に同意します（クレジットカード登録は不要です）。
    - ※ Chrome で同意チェックボックスが押せない場合は、Firefox 等の別ブラウザをお試しください。
 3. **「Create New Project」** から新規プロジェクトを作成します。
-4. **Redirect URL** に `xwarm://oauth/callback`（または `http://localhost/callback`）を登録します。
+4. **Redirect URL** に `xwarm://oauth/callback`を登録します。
 5. **Project Settings → OAuth Authentication** から **Client ID** と **Client Secret** を確認・コピーします。
 
 ---
@@ -109,13 +117,6 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 ---
 
-## 謝辞・関連プロジェクト
-
-- **[private-yusuke/interscheckin](https://github.com/private-yusuke/interscheckin)**: Swarm 利用者向け Android アプリケーション。最新の Foursquare API 仕様調査の参考とさせていただきました。
-- **[appl-rot13/swarm-linker-js](https://github.com/appl-rot13/swarm-linker-js)**: Swarm チェックインを X に自動投稿する Cloudflare Worker。X 投稿文のフォーマット規則を踏襲しています。
-
----
-
 ## ライセンス
 
-[Unlicense](LICENSE)
+[GPL-3.0](LICENSE)

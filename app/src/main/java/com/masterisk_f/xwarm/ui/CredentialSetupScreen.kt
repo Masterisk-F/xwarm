@@ -2,7 +2,6 @@ package com.masterisk_f.xwarm.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,14 +36,14 @@ fun CredentialSetupScreen(
     onStartOAuth: (clientId: String, redirectUri: String) -> Unit,
     onSubmitCode: (codeOrUrl: String, clientId: String, clientSecret: String, redirectUri: String) -> Unit,
     onDirectSaveToken: (token: String) -> Unit,
-    defaultClientId: String = "",
-    defaultClientSecret: String = "",
-    defaultRedirectUri: String = "xwarm://oauth/callback",
+    initialClientId: String = "",
+    initialClientSecret: String = "",
+    initialRedirectUri: String = "xwarm://oauth/callback",
 ) {
     var pastedCodeOrUrl by remember { mutableStateOf("") }
-    var customClientId by remember { mutableStateOf(defaultClientId) }
-    var customClientSecret by remember { mutableStateOf(defaultClientSecret) }
-    var customRedirectUri by remember { mutableStateOf(defaultRedirectUri) }
+    var customClientId by remember { mutableStateOf(initialClientId) }
+    var customClientSecret by remember { mutableStateOf(initialClientSecret) }
+    var customRedirectUri by remember { mutableStateOf(initialRedirectUri) }
     var directToken by remember { mutableStateOf("") }
     var showAdvanced by remember { mutableStateOf(!hasBuiltInCredentials) }
 
@@ -98,9 +97,9 @@ fun CredentialSetupScreen(
         }
 
         // --- Main Action: OAuth login ---
-        val effectiveClientId = customClientId.ifBlank { defaultClientId }
-        val effectiveClientSecret = customClientSecret.ifBlank { defaultClientSecret }
-        val effectiveRedirectUri = customRedirectUri.ifBlank { defaultRedirectUri }
+        val effectiveClientId = customClientId.ifBlank { initialClientId }
+        val effectiveClientSecret = customClientSecret.ifBlank { initialClientSecret }
+        val effectiveRedirectUri = customRedirectUri.ifBlank { initialRedirectUri }
 
         Button(
             onClick = {

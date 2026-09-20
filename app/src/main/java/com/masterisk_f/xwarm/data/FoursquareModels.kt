@@ -1,6 +1,5 @@
 package com.masterisk_f.xwarm.data
 
-import com.masterisk_f.xwarm.tweet.TweetLocation
 import org.json.JSONObject
 
 data class Spot(
@@ -13,12 +12,6 @@ data class Spot(
     val state: String? = null,
     val formattedAddress: List<String>? = null,
 ) {
-    fun toTweetLocation(): TweetLocation = TweetLocation(
-        city = city,
-        state = state,
-        formattedAddress = formattedAddress
-    )
-
     val subtitle: String
         get() {
             val parts = mutableListOf<String>()
@@ -32,7 +25,6 @@ data class CheckInResult(
     val checkinId: String,
     val checkinShortUrl: String,
     val venueName: String,
-    val createdAt: Long? = null,
 )
 
 object FoursquareJsonParser {
@@ -113,12 +105,9 @@ object FoursquareJsonParser {
                 } else {
                     val faArray = locObj.optJSONArray("formattedAddress")
                     if (faArray != null) {
-                        val list = mutableListOf<String>()
-                        for (j in 0 until faArray.length()) {
-                            val str = faArray.optString(j)
-                            if (!str.isNullOrBlank()) list.add(str)
-                        }
-                        if (list.isNotEmpty()) formattedList = list
+                        formattedList = (0 until faArray.length())
+                            .mapNotNull { faArray.optString(it).takeIf(String::isNotBlank) }
+                            .ifEmpty { null }
                     }
                 }
             }
@@ -175,13 +164,10 @@ object FoursquareJsonParser {
         val venueName = venueObj?.optString("name")?.ifEmpty { fallbackVenueName }
             ?: fallbackVenueName
 
-        val createdAt = if (checkin.has("createdAt")) checkin.optLong("createdAt") else null
-
         return CheckInResult(
             checkinId = id,
             checkinShortUrl = shortUrl,
-            venueName = venueName.ifEmpty { "Venue" },
-            createdAt = createdAt
+            venueName = venueName.ifEmpty { "Venue" }
         )
     }
 }

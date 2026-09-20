@@ -1,6 +1,6 @@
 package com.masterisk_f.xwarm
 
-import com.masterisk_f.xwarm.tweet.TweetLocation
+import com.masterisk_f.xwarm.data.Spot
 import com.masterisk_f.xwarm.tweet.TweetTextFormatter
 import com.masterisk_f.xwarm.tweet.isPostalCode
 import org.junit.Assert.assertEquals
@@ -31,14 +31,16 @@ class TweetTextFormatterTest {
 
     @Test
     fun format_whenCityAndStateAvailable() {
-        val loc = TweetLocation(
+        val spot = Spot(
+            id = "test",
+            name = "<Venue Name>",
             city = "<City>",
             state = "<State>",
             formattedAddress = listOf("", "<Address>", "123-4567")
         )
         val actual = TweetTextFormatter.format(
             venueName = "<Venue Name>",
-            location = loc,
+            spot = spot,
             shareUrl = "<URL>"
         )
         assertEquals("I'm at <Venue Name> in <City>, <State>\n<URL>", actual)
@@ -46,14 +48,16 @@ class TweetTextFormatterTest {
 
     @Test
     fun format_whenFormattedAddressContainsPostalCode() {
-        val loc = TweetLocation(
+        val spot = Spot(
+            id = "test",
+            name = "<Venue Name>",
             city = null,
             state = null,
             formattedAddress = listOf("", "<Address>", "123-4567")
         )
         val actual = TweetTextFormatter.format(
             venueName = "<Venue Name>",
-            location = loc,
+            spot = spot,
             shareUrl = "<URL>"
         )
         assertEquals("I'm at <Venue Name> in <Address>\n<URL>", actual)
@@ -61,14 +65,16 @@ class TweetTextFormatterTest {
 
     @Test
     fun format_whenFormattedAddressDoesNotContainPostalCode() {
-        val loc = TweetLocation(
+        val spot = Spot(
+            id = "test",
+            name = "<Venue Name>",
             city = null,
             state = null,
             formattedAddress = listOf("", "<Address>")
         )
         val actual = TweetTextFormatter.format(
             venueName = "<Venue Name>",
-            location = loc,
+            spot = spot,
             shareUrl = "<URL>"
         )
         assertEquals("I'm at <Venue Name> in <Address>\n<URL>", actual)
@@ -76,14 +82,16 @@ class TweetTextFormatterTest {
 
     @Test
     fun format_whenOnlyStateAvailable() {
-        val loc = TweetLocation(
+        val spot = Spot(
+            id = "test",
+            name = "<Venue Name>",
             city = null,
             state = "<State>",
             formattedAddress = emptyList()
         )
         val actual = TweetTextFormatter.format(
             venueName = "<Venue Name>",
-            location = loc,
+            spot = spot,
             shareUrl = "<URL>"
         )
         assertEquals("I'm at <Venue Name> in <State>\n<URL>", actual)
@@ -91,14 +99,16 @@ class TweetTextFormatterTest {
 
     @Test
     fun format_whenOnlyCityAvailable() {
-        val loc = TweetLocation(
+        val spot = Spot(
+            id = "test",
+            name = "<Venue Name>",
             city = "<City>",
             state = null,
             formattedAddress = null
         )
         val actual = TweetTextFormatter.format(
             venueName = "<Venue Name>",
-            location = loc,
+            spot = spot,
             shareUrl = "<URL>"
         )
         assertEquals("I'm at <Venue Name> in <City>\n<URL>", actual)
@@ -106,14 +116,16 @@ class TweetTextFormatterTest {
 
     @Test
     fun format_whenNoLocationDataAvailable() {
-        val loc = TweetLocation(
+        val spot = Spot(
+            id = "test",
+            name = "<Venue Name>",
             city = null,
             state = null,
             formattedAddress = null
         )
         val actual = TweetTextFormatter.format(
             venueName = "<Venue Name>",
-            location = loc,
+            spot = spot,
             shareUrl = "<URL>"
         )
         assertEquals("I'm at <Venue Name>\n<URL>", actual)
@@ -123,7 +135,7 @@ class TweetTextFormatterTest {
     fun format_whenLocationNull() {
         val actual = TweetTextFormatter.format(
             venueName = "<Venue Name>",
-            location = null,
+            spot = null,
             shareUrl = "<URL>"
         )
         assertEquals("I'm at <Venue Name>\n<URL>", actual)

@@ -1,7 +1,6 @@
 package com.masterisk_f.xwarm.ui
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -32,6 +31,11 @@ import com.masterisk_f.xwarm.location.AndroidLocationProvider
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
+
+private val LOCATION_PERMISSIONS = arrayOf(
+    Manifest.permission.ACCESS_FINE_LOCATION,
+    Manifest.permission.ACCESS_COARSE_LOCATION
+)
 
 @Composable
 fun XwarmApp(
@@ -69,14 +73,8 @@ fun XwarmApp(
         viewModel.onPermissionResult(granted, shouldShowRationale)
     }
 
-    // --- Handle incoming OAuth deep link (Route A) ---
-    fun handleIncomingIntent(intent: Intent?) {
-        val data = intent?.data ?: return
-        val code = FoursquareOAuth.extractCodeFromUrl(data.toString()) ?: return
-        val clientId = tokenStore.getClientId()?.ifBlank { null } ?: BuildConfig.FSQ_CLIENT_ID
-        val clientSecret = tokenStore.getClientSecret()?.ifBlank { null } ?: BuildConfig.FSQ_CLIENT_SECRET
-        val redirectUri = tokenStore.getRedirectUri()?.ifBlank { null } ?: BuildConfig.FSQ_REDIRECT_URI
-
+    // --- Unified OAuth code-to-token processor ---
+    fun processOAuthCode(code: String, clientId: String, clientSecret: String, redirectUri: String) {
         if (clientId.isBlank() || clientSecret.isBlank()) {
             authErrorMessage = "Client ID / Secret が設定されていません。"
             return
@@ -108,6 +106,17 @@ fun XwarmApp(
         }
     }
 
+    // --- Handle incoming OAuth deep link (Route A) ---
+    fun handleIncomingIntent(intent: Intent?) {
+        val data = intent?.data ?: return
+        val code = FoursquareOAuth.extractCodeFromUrl(data.toString()) ?: return
+        val clientId = tokenStore.getClientId()?.ifBlank { null } ?: BuildConfig.FSQ_CLIENT_ID
+        val clientSecret = tokenStore.getClientSecret()?.ifBlank { null } ?: BuildConfig.FSQ_CLIENT_SECRET
+        val redirectUri = tokenStore.getRedirectUri()?.ifBlank { null } ?: BuildConfig.FSQ_REDIRECT_URI.ifBlank { "xwarm://oauth/callback" }
+
+        processOAuthCode(code, clientId, clientSecret, redirectUri)
+    }
+
     LaunchedEffect(initialIntent) {
         handleIncomingIntent(initialIntent)
     }
@@ -117,8 +126,6 @@ fun XwarmApp(
         viewModel.events.collectLatest { event ->
             when (event) {
                 is SpotListEvent.OpenX -> {
-                    // D-14: Launch official Web Intent via ACTION_VIEW
-                    // Opens X app via App Links, falls back to browser automatically
                     val encoded = URLEncoder.encode(event.tweetText, "UTF-8")
                     val intentUrl = "https://x.com/intent/tweet?text=$encoded"
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(intentUrl))
@@ -139,12 +146,7 @@ fun XwarmApp(
     // --- Initial load ---
     LaunchedEffect(Unit) {
         if (!locationProvider.hasPermission()) {
-            permissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
+            permissionLauncher.launch(LOCATION_PERMISSIONS)
         } else {
             viewModel.loadSpots()
         }
@@ -171,13 +173,17 @@ fun XwarmApp(
         val defaultClientSecret = BuildConfig.FSQ_CLIENT_SECRET
         val defaultRedirectUri = BuildConfig.FSQ_REDIRECT_URI.ifBlank { "xwarm://oauth/callback" }
 
+        val resolvedClientId = tokenStore.getClientId()?.ifBlank { null } ?: defaultClientId
+        val resolvedClientSecret = tokenStore.getClientSecret()?.ifBlank { null } ?: defaultClientSecret
+        val resolvedRedirectUri = tokenStore.getRedirectUri()?.ifBlank { null } ?: defaultRedirectUri
+
         CredentialSetupScreen(
             hasBuiltInCredentials = defaultClientId.isNotBlank() && defaultClientSecret.isNotBlank(),
             isProcessing = isAuthProcessing,
             errorMessage = authErrorMessage,
-            defaultClientId = defaultClientId,
-            defaultClientSecret = defaultClientSecret,
-            defaultRedirectUri = defaultRedirectUri,
+            initialClientId = resolvedClientId,
+            initialClientSecret = resolvedClientSecret,
+            initialRedirectUri = resolvedRedirectUri,
             onStartOAuth = { clientId, redirectUri ->
                 authErrorMessage = null
                 tokenStore.saveClientId(clientId)
@@ -191,31 +197,7 @@ fun XwarmApp(
                     authErrorMessage = "入力された文字列から認可コードを見つけられませんでした。"
                     return@CredentialSetupScreen
                 }
-
-                isAuthProcessing = true
-                authErrorMessage = null
-                coroutineScope.launch {
-                    val res = FoursquareOAuth.exchangeCodeForToken(
-                        clientId = clientId,
-                        clientSecret = clientSecret,
-                        redirectUri = redirectUri,
-                        code = code
-                    )
-                    res.onSuccess { token ->
-                        repository.verifyAndSaveToken(token)
-                            .onSuccess {
-                                isAuthProcessing = false
-                                viewModel.loadSpots()
-                            }
-                            .onFailure { err ->
-                                isAuthProcessing = false
-                                authErrorMessage = "トークン検証失敗: ${err.message}"
-                            }
-                    }.onFailure { err ->
-                        isAuthProcessing = false
-                        authErrorMessage = "トークン交換失敗: ${err.message}"
-                    }
-                }
+                processOAuthCode(code, clientId, clientSecret, redirectUri)
             },
             onDirectSaveToken = { token ->
                 isAuthProcessing = true
@@ -240,12 +222,7 @@ fun XwarmApp(
             onRefresh = { viewModel.loadSpots(isSwipeRefresh = true) },
             onCheckIn = { spot -> viewModel.checkIn(spot) },
             onRequestPermission = {
-                permissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
-                )
+                permissionLauncher.launch(LOCATION_PERMISSIONS)
             },
             onOpenSettings = {
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

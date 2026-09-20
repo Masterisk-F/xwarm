@@ -121,12 +121,12 @@ class SpotListViewModel(
                 result.onSuccess { checkInRes ->
                     val tweetText = TweetTextFormatter.format(
                         venueName = checkInRes.venueName.ifEmpty { spot.name },
-                        location = spot.toTweetLocation(),
+                        spot = spot,
                         shareUrl = checkInRes.checkinShortUrl
                     )
                     _events.emit(SpotListEvent.OpenX(tweetText))
                 }.onFailure { err ->
-                    val msg = formatError(err)
+                    val msg = resolveErrorMessage(err)
                     _events.emit(SpotListEvent.ShowToast("チェックイン失敗: $msg"))
                 }
             } catch (e: Exception) {
@@ -153,28 +153,19 @@ class SpotListViewModel(
     }
 
     private suspend fun handleApiError(err: Throwable) {
-        when (err) {
-            is FoursquareApiException.Unauthorized -> {
-                tokenStore.clearOAuthToken()
-                _uiState.value = SpotListUiState.NeedsAuth
-            }
-            is FoursquareApiException.RateLimited -> {
-                _uiState.value = SpotListUiState.Error("APIレート制限に達しました。しばらく待ってから再試行してください。")
-            }
-            is FoursquareApiException.QuotaExhausted -> {
-                _uiState.value = SpotListUiState.Error("API無料枠が上限に達しました (HTTP 429)。")
-            }
-            else -> {
-                _uiState.value = SpotListUiState.Error(err.message ?: "データの取得に失敗しました")
-            }
+        if (err is FoursquareApiException.Unauthorized) {
+            tokenStore.clearOAuthToken()
+            _uiState.value = SpotListUiState.NeedsAuth
+        } else {
+            _uiState.value = SpotListUiState.Error(resolveErrorMessage(err))
         }
     }
 
-    private fun formatError(err: Throwable): String = when (err) {
+    private fun resolveErrorMessage(err: Throwable): String = when (err) {
         is FoursquareApiException.Unauthorized -> "認証が無効です。再ログインしてください。"
-        is FoursquareApiException.RateLimited -> "レート制限中です。"
-        is FoursquareApiException.QuotaExhausted -> "利用枠の上限に達しました (429)。"
-        else -> err.message ?: "通信エラー"
+        is FoursquareApiException.RateLimited -> "APIレート制限に達しました。しばらく待ってから再試行してください。"
+        is FoursquareApiException.QuotaExhausted -> "API無料枠が上限に達しました (HTTP 429)。"
+        else -> err.message ?: "通信エラーが発生しました"
     }
 
     companion object {

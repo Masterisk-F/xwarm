@@ -19,9 +19,9 @@ I'm at [スポット名] in [都市, 州 または 住所]
 ## スクリーンショット
 
 <p align="center">
-  <img src="img/screenshot_spots.png" width="320" alt="スポット一覧画面" />
-  &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="img/screenshot_login.png" width="320" alt="認証・セットアップ画面" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="img/screenshot_spots.png" width="320" alt="スポット一覧画面" />
 </p>
 
 ### 主な特徴
